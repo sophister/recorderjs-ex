@@ -7,6 +7,11 @@
 They only change here is that users using this lib can export the `wav` file with specific sample rate. See [this issue](https://github.com/mattdiamond/Recorderjs/issues/186#issuecomment-413838080) for more details. I fail to find any other forks with sample rate support, so I decide to fork it and apply the changes in the previous issue. Thanks to 
 [QiaoZhong](https://github.com/ilikerei) for the solution.
 
+## Installation
+```
+npm install recorderjs-ex
+```
+
 ## Usage
 
 if you don't want to read the whole document, you can just read the following demo code, which is easy to understood
