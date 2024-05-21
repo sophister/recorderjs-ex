@@ -1,8 +1,9 @@
 {
   "name": "recorderjs-ex",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A plugin for recording/exporting the output of Web Audio API nodes",
   "main": "lib/index.js",
+  "types": "types/index.d.ts",
   "scripts": {
     "build": "npm run build:lib && npm run build:browserify",
     "build:lib": "babel src/ -d lib/",
