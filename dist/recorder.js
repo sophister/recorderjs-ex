@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Recorder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Recorder = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 module.exports = require("./recorder").Recorder;
@@ -6,294 +6,348 @@ module.exports = require("./recorder").Recorder;
 },{"./recorder":2}],2:[function(require,module,exports){
 'use strict';
 
-var _createClass = (function () {
-    function defineProperties(target, props) {
-        for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
-        }
-    }return function (Constructor, protoProps, staticProps) {
-        if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
-    };
-})();
-
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
 exports.Recorder = undefined;
+
+var _createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+  };
+}(); /* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable no-use-before-define */
+/**
+ * https://github.com/mattdiamond/Recorderjs
+ */
 
 var _inlineWorker = require('inline-worker');
 
 var _inlineWorker2 = _interopRequireDefault(_inlineWorker);
 
 function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
+  return obj && obj.__esModule ? obj : { default: obj };
 }
 
 function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-        throw new TypeError("Cannot call a class as a function");
-    }
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
 }
 
-var Recorder = exports.Recorder = (function () {
-    function Recorder(source, cfg) {
-        var _this = this;
+var Recorder = exports.Recorder = function () {
+  function Recorder(source, cfg) {
+    var _this = this;
 
-        _classCallCheck(this, Recorder);
+    _classCallCheck(this, Recorder);
 
-        this.config = {
-            bufferLen: 4096,
-            numChannels: 2,
-            mimeType: 'audio/wav'
-        };
-        this.recording = false;
-        this.callbacks = {
-            getBuffer: [],
-            exportWAV: []
-        };
+    this.config = {
+      bufferLen: 4096,
+      numChannels: 2,
+      mimeType: 'audio/wav'
+    };
+    this.recording = false;
+    this.callbacks = {
+      getBuffer: [],
+      exportWAV: []
+    };
 
-        Object.assign(this.config, cfg);
-        this.context = source.context;
-        this.node = (this.context.createScriptProcessor || this.context.createJavaScriptNode).call(this.context, this.config.bufferLen, this.config.numChannels, this.config.numChannels);
+    Object.assign(this.config, cfg);
+    this.context = source.context;
+    this.node = (this.context.createScriptProcessor || this.context.createJavaScriptNode).call(this.context, this.config.bufferLen, this.config.numChannels, this.config.numChannels);
 
-        this.node.onaudioprocess = function (e) {
-            if (!_this.recording) return;
+    this.node.onaudioprocess = function (e) {
+      if (!_this.recording) return;
 
-            var buffer = [];
-            for (var channel = 0; channel < _this.config.numChannels; channel++) {
-                buffer.push(e.inputBuffer.getChannelData(channel));
-            }
-            _this.worker.postMessage({
-                command: 'record',
-                buffer: buffer
-            });
-        };
+      var buffer = [];
+      for (var channel = 0; channel < _this.config.numChannels; channel++) {
+        buffer.push(e.inputBuffer.getChannelData(channel));
+      }
+      _this.worker.postMessage({
+        command: 'record',
+        buffer: buffer
+      });
+    };
 
-        source.connect(this.node);
-        this.node.connect(this.context.destination); //this should not be necessary
+    source.connect(this.node);
+    this.node.connect(this.context.destination); // this should not be necessary
 
-        var self = {};
-        this.worker = new _inlineWorker2.default(function () {
-            var recLength = 0,
-                recBuffers = [],
-                sampleRate = undefined,
-                numChannels = undefined;
+    var self = {};
+    this.worker = new _inlineWorker2.default(function () {
+      var recLength = 0;
+      var recBuffers = [];
+      var sampleRate = void 0;
+      var numChannels = void 0;
 
-            self.onmessage = function (e) {
-                switch (e.data.command) {
-                    case 'init':
-                        init(e.data.config);
-                        break;
-                    case 'record':
-                        record(e.data.buffer);
-                        break;
-                    case 'exportWAV':
-                        exportWAV(e.data.type);
-                        break;
-                    case 'getBuffer':
-                        getBuffer();
-                        break;
-                    case 'clear':
-                        clear();
-                        break;
-                }
-            };
+      this.onmessage = function (e) {
+        // eslint-disable-next-line default-case
+        switch (e.data.command) {
+          case 'init':
+            init(e.data.config);
+            break;
+          case 'record':
+            record(e.data.buffer);
+            break;
+          case 'exportWAV':
+            exportWAV(e.data.type, e.data.sampleRate);
+            break;
+          case 'getBuffer':
+            getBuffer();
+            break;
+          case 'clear':
+            clear();
+            break;
+        }
+      };
 
-            function init(config) {
-                sampleRate = config.sampleRate;
-                numChannels = config.numChannels;
-                initBuffers();
-            }
+      function init(config) {
+        sampleRate = config.sampleRate;
+        numChannels = config.numChannels;
+        initBuffers();
+      }
 
-            function record(inputBuffer) {
-                for (var channel = 0; channel < numChannels; channel++) {
-                    recBuffers[channel].push(inputBuffer[channel]);
-                }
-                recLength += inputBuffer[0].length;
-            }
+      function record(inputBuffer) {
+        for (var channel = 0; channel < numChannels; channel++) {
+          recBuffers[channel].push(inputBuffer[channel]);
+        }
+        recLength += inputBuffer[0].length;
+      }
 
-            function exportWAV(type) {
-                var buffers = [];
-                for (var channel = 0; channel < numChannels; channel++) {
-                    buffers.push(mergeBuffers(recBuffers[channel], recLength));
-                }
-                var interleaved = undefined;
-                if (numChannels === 2) {
-                    interleaved = interleave(buffers[0], buffers[1]);
-                } else {
-                    interleaved = buffers[0];
-                }
-                var dataview = encodeWAV(interleaved);
-                var audioBlob = new Blob([dataview], { type: type });
+      function downSampleBuffer(buffer, rate) {
+        if (rate === sampleRate) {
+          return [buffer, false];
+        }
+        if (rate > sampleRate) {
+          console.warn('downsampling rate show be smaller than original sample rate', rate, sampleRate);
+          return [buffer, false];
+        }
+        var sampleRateRatio = sampleRate / rate;
+        var newLength = Math.round(buffer.length / sampleRateRatio);
+        var result = new Float32Array(newLength);
+        var offsetResult = 0;
+        var offsetBuffer = 0;
+        while (offsetResult < result.length) {
+          var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+          // Use average value of skipped samples
+          var accum = 0;var count = 0;
+          for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+            accum += buffer[i];
+            count++;
+          }
+          result[offsetResult] = accum / count;
+          // Or you can simply get rid of the skipped samples:
+          // result[offsetResult] = buffer[nextOffsetBuffer];
+          offsetResult++;
+          offsetBuffer = nextOffsetBuffer;
+        }
+        console.log('downSampleBuffer done', sampleRate, rate);
+        return [result, true];
+      }
 
-                self.postMessage({ command: 'exportWAV', data: audioBlob });
-            }
+      function exportWAV(type, targetSampleRate) {
+        var buffers = [];
+        for (var channel = 0; channel < numChannels; channel++) {
+          buffers.push(mergeBuffers(recBuffers[channel], recLength));
+        }
+        var interleaved = void 0;
+        if (numChannels === 2) {
+          interleaved = interleave(buffers[0], buffers[1]);
+        } else {
+          interleaved = buffers[0];
+        }
+        var finalRate = sampleRate;
+        if (typeof targetSampleRate === 'number') {
+          var temp = downSampleBuffer(interleaved, targetSampleRate);
+          if (temp[1]) {
+            finalRate = targetSampleRate;
+            interleaved = temp[0];
+          }
+        }
+        var dataview = encodeWAV(interleaved, finalRate);
+        var audioBlob = new Blob([dataview], { type: type });
 
-            function getBuffer() {
-                var buffers = [];
-                for (var channel = 0; channel < numChannels; channel++) {
-                    buffers.push(mergeBuffers(recBuffers[channel], recLength));
-                }
-                self.postMessage({ command: 'getBuffer', data: buffers });
-            }
+        this.postMessage({ command: 'exportWAV', data: audioBlob });
+      }
 
-            function clear() {
-                recLength = 0;
-                recBuffers = [];
-                initBuffers();
-            }
+      function getBuffer() {
+        var buffers = [];
+        for (var channel = 0; channel < numChannels; channel++) {
+          buffers.push(mergeBuffers(recBuffers[channel], recLength));
+        }
+        this.postMessage({ command: 'getBuffer', data: buffers });
+      }
 
-            function initBuffers() {
-                for (var channel = 0; channel < numChannels; channel++) {
-                    recBuffers[channel] = [];
-                }
-            }
+      function clear() {
+        recLength = 0;
+        recBuffers = [];
+        initBuffers();
+      }
 
-            function mergeBuffers(recBuffers, recLength) {
-                var result = new Float32Array(recLength);
-                var offset = 0;
-                for (var i = 0; i < recBuffers.length; i++) {
-                    result.set(recBuffers[i], offset);
-                    offset += recBuffers[i].length;
-                }
-                return result;
-            }
+      function initBuffers() {
+        for (var channel = 0; channel < numChannels; channel++) {
+          recBuffers[channel] = [];
+        }
+      }
 
-            function interleave(inputL, inputR) {
-                var length = inputL.length + inputR.length;
-                var result = new Float32Array(length);
+      function mergeBuffers(recBuffers, recLength) {
+        var result = new Float32Array(recLength);
+        var offset = 0;
+        for (var i = 0; i < recBuffers.length; i++) {
+          result.set(recBuffers[i], offset);
+          offset += recBuffers[i].length;
+        }
+        return result;
+      }
 
-                var index = 0,
-                    inputIndex = 0;
+      function interleave(inputL, inputR) {
+        var length = inputL.length + inputR.length;
+        var result = new Float32Array(length);
 
-                while (index < length) {
-                    result[index++] = inputL[inputIndex];
-                    result[index++] = inputR[inputIndex];
-                    inputIndex++;
-                }
-                return result;
-            }
+        var index = 0;
+        var inputIndex = 0;
 
-            function floatTo16BitPCM(output, offset, input) {
-                for (var i = 0; i < input.length; i++, offset += 2) {
-                    var s = Math.max(-1, Math.min(1, input[i]));
-                    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-                }
-            }
+        while (index < length) {
+          result[index++] = inputL[inputIndex];
+          result[index++] = inputR[inputIndex];
+          inputIndex++;
+        }
+        return result;
+      }
 
-            function writeString(view, offset, string) {
-                for (var i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            }
+      function floatTo16BitPCM(output, offset, input) {
+        for (var i = 0; i < input.length; i++, offset += 2) {
+          var s = Math.max(-1, Math.min(1, input[i]));
+          output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+      }
 
-            function encodeWAV(samples) {
-                var buffer = new ArrayBuffer(44 + samples.length * 2);
-                var view = new DataView(buffer);
+      function writeString(view, offset, string) {
+        for (var i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      }
 
-                /* RIFF identifier */
-                writeString(view, 0, 'RIFF');
-                /* RIFF chunk length */
-                view.setUint32(4, 36 + samples.length * 2, true);
-                /* RIFF type */
-                writeString(view, 8, 'WAVE');
-                /* format chunk identifier */
-                writeString(view, 12, 'fmt ');
-                /* format chunk length */
-                view.setUint32(16, 16, true);
-                /* sample format (raw) */
-                view.setUint16(20, 1, true);
-                /* channel count */
-                view.setUint16(22, numChannels, true);
-                /* sample rate */
-                view.setUint32(24, sampleRate, true);
-                /* byte rate (sample rate * block align) */
-                view.setUint32(28, sampleRate * 4, true);
-                /* block align (channel count * bytes per sample) */
-                view.setUint16(32, numChannels * 2, true);
-                /* bits per sample */
-                view.setUint16(34, 16, true);
-                /* data chunk identifier */
-                writeString(view, 36, 'data');
-                /* data chunk length */
-                view.setUint32(40, samples.length * 2, true);
+      function encodeWAV(samples, sampleRate) {
+        var buffer = new ArrayBuffer(44 + samples.length * 2);
+        var view = new DataView(buffer);
 
-                floatTo16BitPCM(view, 44, samples);
+        /* RIFF identifier */
+        writeString(view, 0, 'RIFF');
+        /* RIFF chunk length */
+        view.setUint32(4, 36 + samples.length * 2, true);
+        /* RIFF type */
+        writeString(view, 8, 'WAVE');
+        /* format chunk identifier */
+        writeString(view, 12, 'fmt ');
+        /* format chunk length */
+        view.setUint32(16, 16, true);
+        /* sample format (raw) */
+        view.setUint16(20, 1, true);
+        /* channel count */
+        view.setUint16(22, numChannels, true);
+        /* sample rate */
+        view.setUint32(24, sampleRate, true);
+        /* byte rate (sample rate * block align) */
+        view.setUint32(28, sampleRate * 4, true);
+        view.setUint32(28, sampleRate * numChannels * 2, true);
+        /* block align (channel count * bytes per sample) */
+        view.setUint16(32, numChannels * 2, true);
+        /* bits per sample */
+        view.setUint16(34, 16, true);
+        /* data chunk identifier */
+        writeString(view, 36, 'data');
+        /* data chunk length */
+        view.setUint32(40, samples.length * 2, true);
 
-                return view;
-            }
-        }, self);
+        floatTo16BitPCM(view, 44, samples);
 
-        this.worker.postMessage({
-            command: 'init',
-            config: {
-                sampleRate: this.context.sampleRate,
-                numChannels: this.config.numChannels
-            }
-        });
+        return view;
+      }
+    }, self);
 
-        this.worker.onmessage = function (e) {
-            var cb = _this.callbacks[e.data.command].pop();
-            if (typeof cb == 'function') {
-                cb(e.data.data);
-            }
-        };
+    this.worker.postMessage({
+      command: 'init',
+      config: {
+        sampleRate: this.context.sampleRate,
+        numChannels: this.config.numChannels
+      }
+    });
+
+    this.worker.onmessage = function (e) {
+      var cb = _this.callbacks[e.data.command].pop();
+      if (typeof cb === 'function') {
+        cb(e.data.data);
+      }
+    };
+  }
+
+  _createClass(Recorder, [{
+    key: 'record',
+    value: function record() {
+      this.recording = true;
+    }
+  }, {
+    key: 'stop',
+    value: function stop() {
+      this.recording = false;
+    }
+  }, {
+    key: 'clear',
+    value: function clear() {
+      this.worker.postMessage({ command: 'clear' });
+    }
+  }, {
+    key: 'getBuffer',
+    value: function getBuffer(cb) {
+      cb = cb || this.config.callback;
+      if (!cb) throw new Error('Callback not set');
+
+      this.callbacks.getBuffer.push(cb);
+
+      this.worker.postMessage({ command: 'getBuffer' });
     }
 
-    _createClass(Recorder, [{
-        key: 'record',
-        value: function record() {
-            this.recording = true;
-        }
-    }, {
-        key: 'stop',
-        value: function stop() {
-            this.recording = false;
-        }
-    }, {
-        key: 'clear',
-        value: function clear() {
-            this.worker.postMessage({ command: 'clear' });
-        }
-    }, {
-        key: 'getBuffer',
-        value: function getBuffer(cb) {
-            cb = cb || this.config.callback;
-            if (!cb) throw new Error('Callback not set');
+    /**
+     * export wav file with target sample rate
+     * @param {Function} cb callback function when data is ready
+     * @param {*} mimeType should be audio/wav
+     * @param {*} sampleRate the target sample rate of the output wav
+     */
 
-            this.callbacks.getBuffer.push(cb);
+  }, {
+    key: 'exportWAV',
+    value: function exportWAV(cb, mimeType, sampleRate) {
+      mimeType = mimeType || this.config.mimeType;
+      cb = cb || this.config.callback;
+      if (!cb) throw new Error('Callback not set');
 
-            this.worker.postMessage({ command: 'getBuffer' });
-        }
-    }, {
-        key: 'exportWAV',
-        value: function exportWAV(cb, mimeType) {
-            mimeType = mimeType || this.config.mimeType;
-            cb = cb || this.config.callback;
-            if (!cb) throw new Error('Callback not set');
+      this.callbacks.exportWAV.push(cb);
 
-            this.callbacks.exportWAV.push(cb);
+      this.worker.postMessage({
+        command: 'exportWAV',
+        type: mimeType,
+        sampleRate: sampleRate
+      });
+    }
+  }], [{
+    key: 'forceDownload',
+    value: function forceDownload(blob, filename) {
+      var url = (window.URL || window.webkitURL).createObjectURL(blob);
+      var link = window.document.createElement('a');
+      link.href = url;
+      link.download = filename || 'output.wav';
+      var click = document.createEvent('Event');
+      click.initEvent('click', true, true);
+      link.dispatchEvent(click);
+    }
+  }]);
 
-            this.worker.postMessage({
-                command: 'exportWAV',
-                type: mimeType
-            });
-        }
-    }], [{
-        key: 'forceDownload',
-        value: function forceDownload(blob, filename) {
-            var url = (window.URL || window.webkitURL).createObjectURL(blob);
-            var link = window.document.createElement('a');
-            link.href = url;
-            link.download = filename || 'output.wav';
-            var click = document.createEvent("Event");
-            click.initEvent("click", true, true);
-            link.dispatchEvent(click);
-        }
-    }]);
-
-    return Recorder;
-})();
+  return Recorder;
+}();
 
 exports.default = Recorder;
 
@@ -302,7 +356,7 @@ exports.default = Recorder;
 
 module.exports = require("./inline-worker");
 },{"./inline-worker":4}],4:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 "use strict";
 
 var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -352,6 +406,6 @@ var InlineWorker = (function () {
 })();
 
 module.exports = InlineWorker;
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}]},{},[1])(1)
 });

@@ -2,11 +2,37 @@
 
 ## A plugin for recording/exporting the output of Web Audio API nodes
 
-**Note:** This repository is not being actively maintained due to lack of time and interest. If you maintain or know of a good fork, please let me know so I can direct future visitors to it. In the meantime, if this library isn't working, you can find a list of popular forks here: http://forked.yannick.io/mattdiamond/recorderjs.
+**Note:** This repository a fork of [Recorder.js](https://github.com/mattdiamond/Recorderjs), because the original repository is no longer maintained. Thanks to Matt Diamond  for his great work.
 
-My sincerest apologies to the open source community for allowing this project to stagnate. I hope it was useful for some of you as a jumping-off point.
+They only change here is that users using this lib can export the `wav` file with specific sample rate. See [this issue](https://github.com/mattdiamond/Recorderjs/issues/186#issuecomment-413838080) for more details. I fail to find any other forks with sample rate support, so I decide to fork it and apply the changes in the previous issue. Thanks to 
+[QiaoZhong](https://github.com/ilikerei) for the solution.
 
----
+## Usage
+
+if you don't want to read the whole document, you can just read the following demo code, which is easy to understood
+
+```javascript
+// initialize the recorder
+const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+const audioContext = new AudioContext({});
+const input = audioContext.createMediaStreamSource(stream);
+const recorder = new Recorder(input, {
+	// we can change the channels, default is 2
+	numChannels: 1,
+});
+
+// start to record
+recorder.record();
+
+// stop to record, maybe user clicks a stop button
+recorder.stop();
+
+// get the audio with the sample rate we want (here is 8000, you can pass 16000)
+recorder.exportWAV((blob: Blob) => {
+	// do something with the blob
+}, 'audio/wav', 8000);
+
+```
 
 ### Syntax
 #### Constructor
@@ -37,7 +63,7 @@ Pretty self-explanatory... **record** will begin capturing audio and **stop** wi
 
 This will clear the recording.
 
-    rec.exportWAV([callback][, type])
+    rec.exportWAV([callback][, type, targetSampleRate])
 
 This will generate a Blob object containing the recording in WAV format. The callback will be called with the Blob as its sole argument. If a callback is not specified, the default callback (as defined in the config) will be used. If no default has been set, an error will be thrown.
 
